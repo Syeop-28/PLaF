@@ -2,13 +2,8 @@ open Parser_plaf.Ast
 open Parser_plaf.Parser
 open Ds
 
-let rec apply_clos : string*expr*env -> exp_val -> exp_val ea_result =
-  fun (id,e,en) ev ->
-  return en >>+
-  extend_env id ev >>+
-  eval_expr e
-and
-  eval_expr : expr -> exp_val ea_result = fun e ->
+let rec eval_expr : expr -> exp_val ea_result =
+  fun e ->
   match e with
   | Int(n) -> return (NumVal n)
   | Var(id) -> apply_env id
@@ -38,10 +33,10 @@ and
     if n2==0
     then error "Division by zero"
     else return (NumVal (n1/n2))
-  | Let(v,def,body) ->
-    eval_expr def >>= 
-    extend_env v >>+
-    eval_expr body 
+  | Let(id,e1,e2) ->
+    eval_expr e1 >>= 
+    extend_env id >>+
+    eval_expr e2
   | ITE(e1,e2,e3) ->
     eval_expr e1 >>=
     bool_of_boolVal >>= fun b ->
@@ -65,12 +60,6 @@ and
   | Letrec([(id,par,_,_,e1)],e2) ->
     extend_env_rec id par e1 >>+
     eval_expr e2
-  | Avg([]) ->
-    error "avg: no arguments"
-  | Avg(es) ->
-    eval_exprs es >>=
-    int_of_numVal_list >>= fun l ->
-    return (NumVal ( (List.fold_left (+) 0 l) / List.length l))
   | Debug(_e) ->
     string_of_env >>= fun str ->
     print_endline str; 
