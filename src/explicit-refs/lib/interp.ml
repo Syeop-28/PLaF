@@ -4,7 +4,8 @@ open Parser_plaf.Parser
     
 let g_store = Store.empty_store 20 (NumVal 0)
 
-let rec eval_expr : expr -> exp_val ea_result = fun e ->
+let rec eval_expr : expr -> exp_val ea_result =
+  fun e ->
   match e with
   | Int(n) -> return @@ NumVal n
   | Var(id) -> apply_env id
@@ -34,10 +35,10 @@ let rec eval_expr : expr -> exp_val ea_result = fun e ->
     if n2==0
     then error "Division by zero"
     else return @@ NumVal (n1/n2)
-  | Let(v,def,body) ->
-    eval_expr def >>= 
-    extend_env v >>+
-    eval_expr body 
+  | Let(id,e1,e2) ->
+    eval_expr e1 >>= 
+    extend_env id >>+
+    eval_expr e2 
   | ITE(e1,e2,e3) ->
     eval_expr e1 >>=
     bool_of_boolVal >>= fun b ->
@@ -52,14 +53,6 @@ let rec eval_expr : expr -> exp_val ea_result = fun e ->
     eval_expr e1 >>= fun ev1 ->
     eval_expr e2 >>= fun ev2 ->
     return @@ PairVal(ev1,ev2)
-  | Fst(e) ->
-    eval_expr e >>=
-    pair_of_pairVal >>= fun p ->
-    return @@ fst p 
-  | Snd(e) ->
-    eval_expr e >>=
-    pair_of_pairVal >>= fun p ->
-    return @@ snd p
   | Proc(id,_,e)  ->
     lookup_env >>= fun en ->
     return (ProcVal(id,e,en))

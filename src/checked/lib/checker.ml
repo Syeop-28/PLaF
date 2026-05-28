@@ -3,7 +3,9 @@ open Dst
 open Parser_plaf.Ast
 open Parser_plaf.Parser
        
-let rec chk_expr : expr -> texpr tea_result = function 
+let rec chk_expr : expr -> texpr tea_result =
+  fun e ->
+  match e with
   | Int _n -> return IntType
   | Var id -> apply_tenv id
   | IsZero(e) ->
@@ -24,10 +26,10 @@ let rec chk_expr : expr -> texpr tea_result = function
     if (t1=BoolType && t2=t3)
     then return t2
     else error "ITE: condition not boolean or types of then and else do not match"
-  | Let(id,e,body) ->
-    chk_expr e >>= fun t ->
+  | Let(id,e1,e2) ->
+    chk_expr e1 >>= fun t ->
     extend_tenv id t >>+
-    chk_expr body
+    chk_expr e2
   | Proc(var,Some t1,e) ->
     extend_tenv var t1 >>+
     chk_expr e >>= fun t2 ->
@@ -41,26 +43,22 @@ let rec chk_expr : expr -> texpr tea_result = function
     if t1=t3
     then return t2
     else error "app: type of argument incorrect"
-  | Letrec([(_id,_param,None,_,_body)],_target) | Letrec([(_id,_param,_,None,_body)],_target) ->
-    error "letrec: type declaration missing"
-  | Letrec([(id,param,Some tParam,Some tRes,body)],target) ->
+  | Letrec([(id,param,Some tParam,Some tRes,e1)],e2) ->
     extend_tenv id (FuncType(tParam,tRes)) >>+
     (extend_tenv param tParam >>+
-     chk_expr body >>= fun t ->
+     chk_expr e1 >>= fun t ->
      if t=tRes 
-     then chk_expr target
+     then chk_expr e2
      else error
          "LetRec: Type of recursive function does not match
 declaration")
-  | Tuple(es) ->
-    failwith "implement me"
-  | Untuple(ids,e1,e2) ->
-    failwith "implement me"      
+  | Letrec([(_id,_param,_tPar,_tRes,_e1)],_e2) ->
+    error "letrec: type declaration missing"
   | Debug(_e) ->
     string_of_tenv >>= fun str ->
     print_endline str;
     error "Debug: reached breakpoint"
-  | _ -> failwith "chk_expr: implement"    
+  | _ -> failwith "chk_expr: implement"
 and
   chk_prog (AProg(_,e)) =
   chk_expr e
