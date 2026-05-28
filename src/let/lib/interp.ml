@@ -62,8 +62,7 @@ let eval_prog (AProg(_,e)) =
 
 (** [interp s] parses [s] and then evaluates it *)
 let interp (e:string) : exp_val result =
-  let c = e |> parse |> eval_prog
-  in run c
+  e |> parse |> eval_prog |> run 
   
 
 
