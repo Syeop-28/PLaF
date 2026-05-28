@@ -36,10 +36,10 @@ let rec eval_expr : expr -> exp_val ea_result =
     if n2==0
     then error "Division by zero"
     else return (NumVal (n1/n2))
-  | Let(id,def,body) ->
-    eval_expr def >>= 
+  | Let(id,e1,e2) ->
+    eval_expr e1 >>= 
     extend_env id >>+
-    eval_expr body 
+    eval_expr e2 
   | ITE(e1,e2,e3) ->
     eval_expr e1 >>=
     bool_of_boolVal >>= fun b ->
